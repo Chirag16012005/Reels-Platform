@@ -32,6 +32,12 @@ const reelschema=new mongoose.Schema({
       ref: "Group",
       required: true, 
     },
+    like:[
+      {
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+      }
+    ]
 },{timestamps:true});
 
 module.exports=mongoose.model('Reel',reelschema);

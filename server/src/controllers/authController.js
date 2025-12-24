@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 export const register= async(req,res)=>{
     try
     {
+        console.log("Reached register controller");
         const {username,email,password}=req.body;
 
         if (!username || !email || !password) 
@@ -23,6 +24,8 @@ export const register= async(req,res)=>{
         email:email,
         password:hashedpassword,
     });
+    await newUser.save();
+
 
     res.status(201).json({
         message:"User registered successfully",
@@ -57,6 +60,14 @@ export const login=async(req,res)=>{
             process.env.JWT_SECRET,
             {expiresIn:'3h'}
         );
+        res.cookie("token",token,{
+            httpOnly:true,
+            secure:false,
+            sameSite:"lax",
+            maxAge:3*60*60*1000,
+
+        });
+
 
         res.status(200).json({
             message:"Login successful",
@@ -72,3 +83,9 @@ export const login=async(req,res)=>{
         res.status(500).json({message:"Server Error"});
     }
 };
+
+export const logout=async(req,res)=>{
+    
+        res.clearCookie("token");
+        res.status(200).json({message:"Logout successful"});
+    };

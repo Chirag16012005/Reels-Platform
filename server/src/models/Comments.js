@@ -1,0 +1,21 @@
+const mongoose=require("mongoose");
+
+const CommentSchema=new mongoose.Schema({
+    text:{
+        type:String,
+        required:true,
+        trim:true
+    },
+    reel:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Reel",
+        required:true,
+    },
+    user:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        required:true,
+    },
+    },{timestampes:true})
+
+module.exports=mongoose.model("Comment",CommentSchema);

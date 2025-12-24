@@ -1,24 +1,50 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/authcontext";
+
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+// import Groups from "./pages/Groups";
+// import Feed from "./pages/Feed";
+// import UploadReel from "./pages/UploadReel";
+// import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* <Route
+            path="/groups"
+            element={
+              <ProtectedRoute>
+                <Groups />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/feed/:groupId"
+            element={
+              <ProtectedRoute>
+                <Feed />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/upload"
+            element={
+              <ProtectedRoute>
+                <UploadReel />
+              </ProtectedRoute>
+            }
+          /> */}
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
