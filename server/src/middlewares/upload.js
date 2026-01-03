@@ -1,23 +1,28 @@
-const multer=require("multer");
-const {CloudinaryStorage}=require("multer-storage-cloudinary");
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../../config/cloudinary");
 
-const cloudinary=require("../../config/cloudinary");
-
-const storage=new CloudinaryStorage({
-    cloudinary:cloudinary,
-    params:{
-        folder:"reels_app",
-        allowed_formats:["jpg","png","mp4","jpeg"],
-        resource_type:"video",
-        format: async()=>"mp4",
-    },
+// Validate Cloudinary config
+console.log("Cloudinary config check:", {
+  hasCloudName: !!process.env.CLOUD_NAME,
+  hasApiKey: !!process.env.CLOUD_API_KEY,
+  hasApiSecret: !!process.env.CLOUD_API_SECRET,
 });
 
-const upload=multer({
-    storage:storage,
-    limits:{
-        filesize:50*1024*1024,
-    }
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "reels_app",
+    resource_type: "video",
+    allowed_formats: ["mp4", "mov", "webm"],
+  },
 });
 
-module.exports=upload;
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+});
+
+module.exports = upload;

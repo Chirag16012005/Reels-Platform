@@ -4,7 +4,7 @@ const User=require("../models/User");
 const createGroup=async(req,res)=>{
     try{
         const {name}=req.body;
-        const userId=req.user.id;
+        const userId=req.user._id;
 
         if(!name)
             return res.status(400).json({
@@ -36,13 +36,13 @@ const createGroup=async(req,res)=>{
 
 const AddmemberToGroup=async(req,res)=>{
     const {groupId,memberId}=req.body;
-    const userId=req.user.id;
+    const userId=req.user._id;
 
     try{
         const group=await Group.findById(groupId);
         if(!group)
             return res.status(404).json({message:"Group not found"});
-        if(group.createdBy.toString()!==userId)
+        if(group.createdBy.toString()!==userId.toString())
             return res.status(403).json({message:"Only group creator can add members"});
 
         if(group.members.includes(memberId))

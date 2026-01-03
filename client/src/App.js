@@ -3,10 +3,10 @@ import { AuthProvider } from "./context/authcontext";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-// import Groups from "./pages/Groups";
-// import Feed from "./pages/Feed";
-// import UploadReel from "./pages/UploadReel";
-// import ProtectedRoute from "./components/ProtectedRoute";
+import Groups from "./pages/Groups";
+import UploadReel from "./pages/UploadReel";
+import GroupFeed from "./pages/GroupFeed";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* <Route
+          <Route
             path="/groups"
             element={
               <ProtectedRoute>
@@ -26,22 +26,20 @@ function App() {
           />
 
           <Route
-            path="/feed/:groupId"
+            path="/group/:groupId"
             element={
               <ProtectedRoute>
-                <Feed />
+                <GroupFeed />
               </ProtectedRoute>
             }
           />
-
-          <Route
-            path="/upload"
+          <Route path="/upload"
             element={
               <ProtectedRoute>
                 <UploadReel />
               </ProtectedRoute>
             }
-          /> */}
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

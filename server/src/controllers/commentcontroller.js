@@ -34,7 +34,7 @@ exports.getComments=async(req,res)=>{
     const {reelId}=req.params;
 
     const comments = await Comment.find({ reel: reelId })
-      .populate("user", "name email")
+      .populate("user", "username email")
       .sort({ createdAt: 1 });
 
     res.json(comments);

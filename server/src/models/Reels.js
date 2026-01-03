@@ -27,12 +27,12 @@ const reelschema=new mongoose.Schema({
       required: true,
     },
 
-    group: {
+    groupId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group",
       required: true, 
     },
-    like:[
+    likes:[
       {
         type:mongoose.Schema.Types.ObjectId,
         ref:"User"

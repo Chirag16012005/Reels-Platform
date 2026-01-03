@@ -1,23 +1,27 @@
-const jwt=require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-const authmiddleware=(req,res,next)=>{
-    const authHeader=req.headers.authorization;
+const authMiddleware = (req, res, next) => {
+  try {
+    console.log("USER ID:", req.cookies);
+    const token = req.cookies.token;
 
-    if(!authHeader || !authHeader.startsWith('Bearer '))
-        return res.status(401).json({message:"No token provided"});
 
-    const token=authHeader.split(' ')[1];
-
-    try
-    {
-        const decoded=jwt.verify(token,process.env.JWT_SECRET);
-        req.user={id:decoded.userId};
-        next();
+    if (!token) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
-    catch(error)
-    {
-        return res.status(401).json({message:"Invalid token"});
-    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+    req.user = { _id: decoded.userId };
+    console.log("USER ID:", req.user._id);
+    console.log("Auth Middleware Passed");
+    next();
+  } catch (error) 
+  {
+    console.log("Auth Middleware Error:", error);
+    return res.status(401).json({ message: "Invalid token" });
+  }
 };
 
-module.exports=authmiddleware;
+module.exports = authMiddleware;
