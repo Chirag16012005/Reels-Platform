@@ -6,35 +6,111 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    try {
+      await logout();
+      navigate("/login");
+    } catch (err) {
+      console.error("Failed to logout", err);
+    }
+  };
+
+  const handleProfile = () => {
+    navigate("/profile");
   };
 
   return (
-    <nav style={styles.nav}>
-      <h2>Reels</h2>
+    <header style={styles.header}>
+      <nav style={styles.nav}>
+        <Link to={user ? "/groups" : "/login"} style={styles.brand}>
+          Reels
+        </Link>
 
-      {user && (
-        <div style={styles.right}>
-          <span>@{user.username}</span>
-          <button onClick={handleLogout}>Logout</button>
+        <div style={styles.actions}>
+          {user ? (
+            <>
+              <span style={styles.username}>{user.username}</span>
+              <button type="button" style={styles.button} onClick={handleProfile}>
+                Profile
+              </button>
+              <button type="button" style={styles.logoutButton} onClick={handleLogout}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" style={styles.link}>
+                Login
+              </Link>
+              <Link to="/signup" style={styles.primaryLink}>
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
-      )}
-    </nav>
+      </nav>
+    </header>
   );
 };
 
 const styles = {
+  header: {
+    borderBottom: "1px solid #e5e5e5",
+    backgroundColor: "#ffffff",
+  },
   nav: {
     display: "flex",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    borderBottom: "1px solid #ddd",
-  },
-  right: {
-    display: "flex",
-    gap: "10px",
     alignItems: "center",
+    justifyContent: "space-between",
+    padding: "12px 24px",
+    maxWidth: "1100px",
+    margin: "0 auto",
+  },
+  brand: {
+    fontSize: "1.5rem",
+    fontWeight: 600,
+    color: "#111827",
+    textDecoration: "none",
+  },
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+  username: {
+    fontSize: "0.95rem",
+    color: "#4b5563",
+  },
+  button: {
+    padding: "6px 14px",
+    borderRadius: "6px",
+    border: "1px solid #d1d5db",
+    backgroundColor: "#ffffff",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    transition: "background-color 0.2s ease",
+  },
+  logoutButton: {
+    padding: "6px 14px",
+    borderRadius: "6px",
+    border: "1px solid #ef4444",
+    backgroundColor: "#ef4444",
+    color: "#ffffff",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    transition: "opacity 0.2s ease",
+  },
+  link: {
+    fontSize: "0.9rem",
+    color: "#6b7280",
+    textDecoration: "none",
+  },
+  primaryLink: {
+    padding: "6px 14px",
+    borderRadius: "6px",
+    backgroundColor: "#2563eb",
+    color: "#ffffff",
+    fontSize: "0.9rem",
+    textDecoration: "none",
   },
 };
 

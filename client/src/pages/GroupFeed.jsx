@@ -51,9 +51,8 @@ const GroupFeed = () => {
 
   const isLiked = (reel) => {
     if (!user || !reel.likes || reel.likes.length === 0) return false;
-
-    return reel.likes.some(
-      (id) =>
+    
+    return reel.likes.some((id) =>
         (typeof id === "string" && id === user._id) ||
         (typeof id === "object" && id.toString() === user._id) ||
         id.toString() === user._id.toString()
@@ -77,7 +76,7 @@ const GroupFeed = () => {
           Upload Your Reel
         </button>
       </div>
-      {reels.length === 0 && (
+      {reels.length===0 && (
         <div style={styles.emptyState}>
           <p>No reels in this group yet</p>
             Upload Your Reel
@@ -98,9 +97,10 @@ const GroupFeed = () => {
             </div>
 
             <button
-              style={{
+              style=
+              {{
                 ...styles.likeBtn,
-                color: liked ? "red" : "black",
+                color: liked?"red":"black",
                 fontWeight: liked ? "bold" : "normal",
               }}
               onClick={() => handleLike(reel._id)}

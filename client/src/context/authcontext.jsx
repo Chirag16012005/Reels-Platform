@@ -11,7 +11,8 @@
     useEffect(() => {
 
       api.get("/auth/me")
-        .then(res => {
+        .then(res => 
+          {
           console.log(res?.data?.user);
           setUser(res.data.user)})
         .catch(() => setUser(null))
@@ -19,14 +20,24 @@
         
     }, []);
 
-    // ONLY updates state (no API call here)
-    const login = (userData) => {
+    const login = (userData) => 
+    {
       setUser(userData);
     };
 
     const logout = async () => {
-      await api.post("/auth/logout");
+      try
+      {
+        await api.post("/auth/logout");
+      }
+      catch(err)
+      {
+        console.error("Logout failed",err);
+      }
+      finally
+      {
       setUser(null);
+      }
     };
 
     return (

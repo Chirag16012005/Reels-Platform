@@ -46,8 +46,10 @@ const Groups = () => {
   };
 
   // add member
-  const handleAddMember = async () => {
-    if (!memberEmail || !selectedGroup) return;
+  const handleAddMember = async () => 
+    {
+    if (!memberEmail || !selectedGroup) 
+    return;
 
     try {
       await api.post("/groups/add-member", {
