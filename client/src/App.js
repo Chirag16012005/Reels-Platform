@@ -7,6 +7,7 @@ import Groups from "./pages/Groups";
 import UploadReel from "./pages/UploadReel";
 import GroupFeed from "./pages/GroupFeed";
 import Profile from "./pages/Profile";
+import LandingPage from "./pages/LandingPage";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import Navbar from "./components/navbar";
 
@@ -16,6 +17,7 @@ function App() {
       <BrowserRouter>
         <Navbar />
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 

@@ -8,6 +8,8 @@ const Groups = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [memberEmail, setMemberEmail] = useState("");
   const [error, setError] = useState("");
+  const [viewMembersGroup, setViewMembersGroup] = useState(null);
+  const [members, setMembers] = useState([]);
 
   const navigate = useNavigate();
 
@@ -59,8 +61,20 @@ const Groups = () => {
 
       setMemberEmail("");
       alert("Member added");
+      fetchGroups();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to add member");
+    }
+  };
+
+  // view members
+  const handleViewMembers = async (group) => {
+    try {
+      const res = await api.get(`/groups/${group._id}`);
+      setMembers(res.data.members || []);
+      setViewMembersGroup(group);
+    } catch (err) {
+      alert("Failed to load members");
     }
   };
 
@@ -92,9 +106,14 @@ const Groups = () => {
             {group.name}
           </span>
 
-          <button onClick={() => setSelectedGroup(group)}>
-            Add Member
-          </button>
+          <div style={styles.buttonGroup}>
+            <button onClick={() => handleViewMembers(group)}>
+              View Members
+            </button>
+            <button onClick={() => setSelectedGroup(group)}>
+              Add Member
+            </button>
+          </div>
         </div>
       ))}
 
@@ -115,6 +134,28 @@ const Groups = () => {
           </div>
         </div>
       )}
+
+      {/* VIEW MEMBERS */}
+      {viewMembersGroup && (
+        <div style={styles.membersBox}>
+          <h4>Members of: {viewMembersGroup.name}</h4>
+          
+          {members.length === 0 ? (
+            <p>No members found</p>
+          ) : (
+            <ul style={styles.membersList}>
+              {members.map((member) => (
+                <li key={member._id} style={styles.memberItem}>
+                  <strong>{member.username}</strong>
+                  <span style={styles.memberEmail}>{member.email}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button onClick={() => setViewMembersGroup(null)}>Close</button>
+        </div>
+      )}
     </div>
   );
 };
@@ -133,16 +174,46 @@ const styles = {
   groupCard: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center",
     padding: "12px",
     border: "1px solid #ddd",
     borderRadius: "6px",
     marginBottom: "10px",
+  },
+  buttonGroup: {
+    display: "flex",
+    gap: "8px",
   },
   addMemberBox: {
     marginTop: "20px",
     padding: "15px",
     border: "1px solid #ccc",
     borderRadius: "6px",
+  },
+  membersBox: {
+    marginTop: "20px",
+    padding: "15px",
+    border: "1px solid #007bff",
+    borderRadius: "6px",
+    backgroundColor: "#f8f9fa",
+  },
+  membersList: {
+    listStyle: "none",
+    padding: 0,
+    margin: "10px 0",
+  },
+  memberItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "10px",
+    marginBottom: "8px",
+    backgroundColor: "white",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+  },
+  memberEmail: {
+    color: "#666",
+    fontSize: "14px",
   },
 };
 

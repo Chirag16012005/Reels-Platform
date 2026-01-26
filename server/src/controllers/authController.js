@@ -1,9 +1,12 @@
-import User  from '../models/User.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const OTP = require("../models/otp.js");
+const User = require("../models/User");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { sendOTPEmail } = require('./sendMail.js');
+const otpgenerator = require('otp-generator');
 
 
-export const register= async(req,res)=>{
+exports.register = async (req, res) => {
     try
     {
         console.log("Reached register controller");
@@ -25,6 +28,27 @@ export const register= async(req,res)=>{
         password:hashedpassword,
     });
     await newUser.save();
+     const emailSubject = "Welcome to Reels Platform!";
+    const emailText = `Hi ${username},\n\nThank you for signing up for Reels Platform! We're excited to have you on board.\n\nYou can now start creating and managing your notes.\n\nBest regards,\nReels Platform Team`;
+    const emailHtml = `
+      <h2>Welcome to Reels Platform!</h2>
+      <p>Hi <strong>${username}</strong>,</p>
+      <p>Thank you for signing up for Reels Platform! We're excited to have you on board.</p>
+      <p>You can now start posting reels.</p>
+      <br>
+      <p>Best regards,<br>Reels Platform Team: Chirag Katkoriya</p>
+    `;
+    sendMail(email, emailSubject, emailText, emailHtml)
+      .then(result => {
+        if (result.success) 
+          {
+          console.log("Welcome email sent to:", email);
+          console.log("Preview URL:", result.previewUrl);
+        } else {
+          console.error("Failed to send welcome email:", result.error);
+        }
+      })
+      .catch(err => console.error("Email error:", err));
 
 
     res.status(201).json({
@@ -39,9 +63,83 @@ export const register= async(req,res)=>{
     catch(error){
         res.status(500).json({message:"Server Error"});
     }
-}
+};
 
-export const login=async(req,res)=>{
+exports.sendSignupOTP = async (req, res) => {
+    try{
+        const {email,name,password}=req.body;
+
+        if(!email || !name || !password)
+            return res.status(400).json({message:"All fields are required"});
+
+            const existingUser= await User.findOne({email});
+    if(existingUser)
+      return res.status(400).json({message:"User with this email already exists"});
+
+    await OTP.deleteMany({email});
+
+    const otp= otpgenerator.generate(6,{
+      digits:true,
+      upperCaseAlphabets:false,
+      lowerCaseAlphabets:false,
+      specialChars:false});
+    
+
+    await OTP.create({email,otp});
+
+      const emailResult=await sendOTPEmail(email,otp,name);
+
+      if(emailResult.success){
+        res.status(200).json({
+          message:"OTP sent to email",
+          email:email
+        });
+      }
+      else{
+        res.status(500).json({message:"Error sending OTP email", error: emailResult.error});
+      }
+    }
+    catch(error){
+        res.status(500).json({message:"Server Error"});
+    }
+};
+
+exports.verifySignupOTP = async (req, res) => {
+  try {
+    const { email, otp, name, password } = req.body;
+
+    if (!email || !otp || !name || !password)
+      return res.status(400).json({ message: "All fields are required" });
+
+    const otpRecord = await OTP.findOne({ email, otp });
+    if (!otpRecord)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    await OTP.deleteMany({ email });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      username: name,
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      message: "Signup successful",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
+exports.login = async (req, res) => {
     try{
         const{email,password}=req.body;
         if(!email || !password)
@@ -84,7 +182,7 @@ export const login=async(req,res)=>{
     }
 };
 
-export const logout=async(req,res)=>{
+exports.logout = async (req, res) => {
     
         res.clearCookie("token",{
             httpOnly:true,

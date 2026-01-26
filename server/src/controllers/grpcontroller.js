@@ -35,7 +35,7 @@ const createGroup=async(req,res)=>{
 }
 
 const AddmemberToGroup=async(req,res)=>{
-    const {groupId,memberId}=req.body;
+    const {groupId,email}=req.body;
     const userId=req.user._id;
 
     try{
@@ -45,6 +45,13 @@ const AddmemberToGroup=async(req,res)=>{
         if(group.createdBy.toString()!==userId.toString())
             return res.status(403).json({message:"Only group creator can add members"});
 
+        // Find user by email
+        const memberToAdd = await User.findOne({email});
+        if(!memberToAdd)
+            return res.status(404).json({message:"User with this email not found"});
+
+        const memberId = memberToAdd._id;
+
         if(group.members.includes(memberId))
             return res.status(400).json({message:"User is already a member of the group"});
 
@@ -53,9 +60,10 @@ const AddmemberToGroup=async(req,res)=>{
         await User.findByIdAndUpdate(memberId,{
             $push:{groups:groupId}
         });
-        res.status(200).json({message:"Member added to group"});
+        res.status(200).json({message:"Member added to group successfully"});
     }
     catch(err){
+        console.error(err);
         res.status(500).json({message:"Server error"});
     }
 }
