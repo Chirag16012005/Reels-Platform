@@ -92,7 +92,7 @@ const setupSocket = (io) => {
             }
 
             try {
-                // Create and save message
+            
                 const message = await Message.create({
                     groupId,
                     sender: socket.userId,
@@ -100,13 +100,10 @@ const setupSocket = (io) => {
                     messageType: 'text',
                 });
 
-                // Populate sender info
                 const populatedMessage = await Message.findById(message._id)
                     .populate('sender', 'username email');
 
                 console.log('Message saved:', populatedMessage._id);
-
-                // Broadcast to all in the group (including sender)
                 io.to(groupId).emit('new-message', populatedMessage);
             } catch (err) {
                 console.error('Send message error:', err);

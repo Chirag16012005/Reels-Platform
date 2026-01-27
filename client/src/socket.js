@@ -12,13 +12,12 @@ export const connectSocket = () => {
         return socket;
     }
 
-    // Disconnect existing socket if any
     if (socket) {
         socket.disconnect();
     }
 
     socket = io(SOCKET_URL, {
-        withCredentials: true, // Important: sends cookies with connection
+        withCredentials: true,
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,

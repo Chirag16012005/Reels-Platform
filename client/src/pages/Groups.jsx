@@ -13,7 +13,7 @@ const Groups = () => {
 
   const navigate = useNavigate();
 
-  // fetch groups
+
   const fetchGroups = async () => {
     try {
       const res = await api.get("/groups");
