@@ -8,6 +8,7 @@ import UploadReel from "./pages/UploadReel";
 import GroupFeed from "./pages/GroupFeed";
 import Profile from "./pages/Profile";
 import LandingPage from "./pages/LandingPage";
+import MyReels from "./pages/MyReels";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import Navbar from "./components/navbar";
 
@@ -42,6 +43,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UploadReel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-reels"
+            element={
+              <ProtectedRoute>
+                <MyReels />
               </ProtectedRoute>
             }
           />

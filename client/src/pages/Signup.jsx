@@ -2,8 +2,7 @@
 import { useState } from "react";
 import api from "../api/axios";
 import { Link, useNavigate } from "react-router-dom";
-import "./AuthPage.css";
-import axios from "axios";
+import "../styles/AuthPage.css";
 
 const Signup = () => {
   const [name, setName] = useState("");

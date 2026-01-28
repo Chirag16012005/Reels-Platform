@@ -2,45 +2,27 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/authcontext";
-import {
-  getSocket,
-  connectSocket,
-  joinGroup,
-  leaveGroup,
-  sendMessage,
-  shareReel,
-} from "../socket";
-import "./GroupFeed.css";
+import "../styles/GroupFeed.css";
 
 const GroupFeed = () => {
   const navigate = useNavigate();
   const { groupId } = useParams();
   const { user } = useAuth();
 
-  // Reels state
   const [reels, setReels] = useState([]);
   const [loadingReels, setLoadingReels] = useState(true);
   const [reelsError, setReelsError] = useState("");
-
-  // Chat state
-  const [messages, setMessages] = useState([]);
-  const [loadingMessages, setLoadingMessages] = useState(true);
-  const [newMessage, setNewMessage] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(true);
-
-  // Group info
   const [groupInfo, setGroupInfo] = useState(null);
 
-  const messagesEndRef = useRef(null);
+  // Comments state
+  const [selectedReel, setSelectedReel] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
 
-  // Scroll chat to bottom
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const commentsEndRef = useRef(null);
 
   // Fetch reels
   useEffect(() => {
@@ -54,7 +36,6 @@ const GroupFeed = () => {
         setLoadingReels(false);
       }
     };
-
     fetchReels();
   }, [groupId]);
 
@@ -68,55 +49,29 @@ const GroupFeed = () => {
         console.error("Failed to load group info:", err);
       }
     };
-
     fetchGroupInfo();
   }, [groupId]);
 
-  // Socket connection and chat
+  // Fetch comments when a reel is selected
   useEffect(() => {
-    if (!groupId || !user) return;
-
-    // Connect socket (cookies are sent automatically with withCredentials)
-    connectSocket();
-    const socket = getSocket();
-
-    // Wait for socket to connect, then join group
-    if (socket) {
-      if (socket.connected) {
-        joinGroup(groupId);
-      } else {
-        socket.on('connect', () => {
-          joinGroup(groupId);
-        });
-      }
+    if (!selectedReel) {
+      setComments([]);
+      return;
     }
 
-    // Fetch message history
-    const fetchMessages = async () => {
+    const fetchComments = async () => {
+      setLoadingComments(true);
       try {
-        const res = await api.get(`/messages/${groupId}`);
-        setMessages(res.data);
+        const res = await api.get(`/comments/reel/${selectedReel._id}?groupId=${groupId}`);
+        setComments(res.data);
       } catch (err) {
-        console.error("Failed to load messages:", err);
+        console.error("Failed to load comments:", err);
       } finally {
-        setLoadingMessages(false);
+        setLoadingComments(false);
       }
     };
-
-    fetchMessages();
-
-    // Listen for new messages
-    socket?.on("new-message", (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-
-    // Cleanup
-    return () => {
-      leaveGroup(groupId);
-      socket?.off("new-message");
-      socket?.off("connect");
-    };
-  }, [groupId, user]);
+    fetchComments();
+  }, [selectedReel, groupId]);
 
   // Handle like
   const handleLike = async (reelId) => {
@@ -146,23 +101,121 @@ const GroupFeed = () => {
     });
   };
 
-  // Send chat message
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    sendMessage(groupId, newMessage.trim());
-    setNewMessage("");
+  // Open comments for a reel
+  const handleOpenComments = (reel) => {
+    setSelectedReel(reel);
+    setReplyingTo(null);
+    setNewComment("");
   };
 
-  // Share reel to chat
-  const handleShareToChat = (reelId) => {
-    shareReel(groupId, reelId, "Check out this reel!");
+  // Close comments panel
+  const handleCloseComments = () => {
+    setSelectedReel(null);
+    setReplyingTo(null);
+    setNewComment("");
+  };
+
+  // Add comment or reply
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim() || !selectedReel) return;
+
+    try {
+      const payload = {
+        text: newComment.trim(),
+        reelId: selectedReel._id,
+        groupId: groupId,
+      };
+
+      // If replying to a comment
+      if (replyingTo) {
+        payload.parentCommentId = replyingTo._id;
+      }
+
+      const res = await api.post("/comments/add", payload);
+
+      // Refresh comments to show the new one with proper nesting
+      const commentsRes = await api.get(`/comments/reel/${selectedReel._id}?groupId=${groupId}`);
+      setComments(commentsRes.data);
+
+      setNewComment("");
+      setReplyingTo(null);
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    }
+  };
+
+  // Delete comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await api.delete(`/comments/${commentId}`);
+      // Refresh comments
+      const commentsRes = await api.get(`/comments/reel/${selectedReel._id}?groupId=${groupId}`);
+      setComments(commentsRes.data);
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    }
   };
 
   // Format time
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const diff = now - date;
+
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Recursive comment component
+  const CommentItem = ({ comment, depth = 0 }) => {
+    const isOwn = comment.user?._id === user?._id;
+    const maxIndent = Math.min(depth, 3);
+
+    return (
+      <div className={`comment-item depth-${maxIndent}`}>
+        <div className="comment-header">
+          <div className="comment-avatar">
+            {comment.user?.username?.charAt(0).toUpperCase() || "?"}
+          </div>
+          <div className="comment-meta">
+            <span className="comment-author">@{comment.user?.username || "Unknown"}</span>
+            <span className="comment-time">{formatTime(comment.createdAt)}</span>
+          </div>
+        </div>
+        <p className="comment-text">{comment.text}</p>
+        <div className="comment-actions-row">
+          <button
+            className="comment-action-btn"
+            onClick={() => {
+              setReplyingTo(comment);
+              setNewComment(`@${comment.user?.username} `);
+            }}
+          >
+            Reply
+          </button>
+          {isOwn && (
+            <button
+              className="comment-action-btn delete"
+              onClick={() => handleDeleteComment(comment._id)}
+            >
+              Delete
+            </button>
+          )}
+        </div>
+
+        {/* Render nested replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="comment-replies">
+            {comment.replies.map((reply) => (
+              <CommentItem key={reply._id} comment={reply} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -175,7 +228,7 @@ const GroupFeed = () => {
             className="upload-btn"
             onClick={() => navigate(`/upload?groupId=${groupId}`)}
           >
-            + Upload Reel
+            Upload Reel
           </button>
         </div>
 
@@ -230,10 +283,10 @@ const GroupFeed = () => {
                         ❤️ {likeCount}
                       </button>
                       <button
-                        className="action-btn share-to-chat"
-                        onClick={() => handleShareToChat(reel._id)}
+                        className={`action-btn comment-btn ${selectedReel?._id === reel._id ? "active" : ""}`}
+                        onClick={() => handleOpenComments(reel)}
                       >
-                        💬 Share to Chat
+                        💬 Comments
                       </button>
                     </div>
                   </div>
@@ -244,74 +297,106 @@ const GroupFeed = () => {
         )}
       </div>
 
-      {/* Right Panel - Chat */}
+      {/* Right Panel - Comments or Members */}
       <div className={`chat-panel ${!isChatOpen ? "hidden" : ""}`}>
-        <div className="chat-panel-header">
-          <h3>💬 Group Chat</h3>
-          <p>{groupInfo?.members?.length || 0} members</p>
-        </div>
-
-        <div className="chat-messages-container">
-          {loadingMessages ? (
-            <div className="chat-empty-state">Loading messages...</div>
-          ) : messages.length === 0 ? (
-            <div className="chat-empty-state">
-              No messages yet. Start the conversation!
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div
-                key={msg._id}
-                className={`chat-message ${msg.sender?._id === user?._id ? "own" : ""
-                  }`}
-              >
-                <div className="chat-message-sender">
-                  {msg.sender?.username || "Unknown"}
-                </div>
-
-                {msg.messageType === "reel" && msg.reelId ? (
-                  <div className="chat-shared-reel">
-                    <video src={msg.reelId.videoUrl} controls />
-                    <div className="chat-shared-reel-caption">
-                      {msg.reelId.caption || "Shared a reel"}
-                    </div>
-                    {msg.text && (
-                      <div className="chat-message-text">{msg.text}</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="chat-message-text">{msg.text}</div>
-                )}
-
-                <div className="chat-message-time">
-                  {formatTime(msg.createdAt)}
+        {selectedReel ? (
+          <>
+            {/* Comments Header */}
+            <div className="chat-panel-header">
+              <div className="comments-header-content">
+                <button className="back-btn" onClick={handleCloseComments}>
+                  ←
+                </button>
+                <div>
+                  <h3>💬 Comments</h3>
+                  <p>{comments.length} comment{comments.length !== 1 ? "s" : ""}</p>
                 </div>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            </div>
 
-        <form className="chat-input-container" onSubmit={handleSendMessage}>
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="chat-input"
-          />
-          <button type="submit" className="chat-send-btn">
-            ➤
-          </button>
-        </form>
+            <div className="chat-messages-container">
+              {loadingComments ? (
+                <div className="chat-empty-state">Loading comments...</div>
+              ) : comments.length === 0 ? (
+                <div className="chat-empty-state">
+                  No comments yet. Be the first to comment!
+                </div>
+              ) : (
+                <div className="comments-list">
+                  {comments.map((comment) => (
+                    <CommentItem key={comment._id} comment={comment} />
+                  ))}
+                  <div ref={commentsEndRef} />
+                </div>
+              )}
+            </div>
+
+            <form className="chat-input-container" onSubmit={handleAddComment}>
+              {replyingTo && (
+                <div className="replying-to">
+                  <span>Replying to @{replyingTo.user?.username}</span>
+                  <button type="button" onClick={() => {
+                    setReplyingTo(null);
+                    setNewComment("");
+                  }}>✕</button>
+                </div>
+              )}
+              <div className="input-row">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
+                  className="chat-input"
+                />
+                <button type="submit" className="chat-send-btn">
+                  ➤
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <>
+            <div className="chat-panel-header">
+              <h3>👥 {groupInfo?.name || "Group"}</h3>
+              <p>{groupInfo?.members?.length || 0} members</p>
+            </div>
+
+            {/* Members List */}
+            <div className="chat-messages-container">
+              <div className="members-section">
+                <h4 className="members-title">Group Members</h4>
+                {groupInfo?.members?.length > 0 ? (
+                  <div className="members-list">
+                    {groupInfo.members.map((member) => (
+                      <div key={member._id} className="member-item">
+                        <div className="member-avatar">
+                          {member.username?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                        <div className="member-info">
+                          <span className="member-name">@{member.username}</span>
+                          {member._id === groupInfo.createdBy?._id && (
+                            <span className="member-role">Admin</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="chat-empty-state">No members found</div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Mobile Chat Toggle */}
+      {/* Mobile Toggle */}
       <button
         className={`mobile-chat-toggle ${isChatOpen ? "chat-open" : ""}`}
         onClick={() => setIsChatOpen(!isChatOpen)}
       >
-        💬 Chat
+        {selectedReel ? "💬 Comments" : "👥 Members"}
       </button>
     </div>
   );

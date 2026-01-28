@@ -29,6 +29,9 @@ const Navbar = () => {
           {user ? (
             <>
               <span style={styles.username}>{user.username}</span>
+              <Link to="/my-reels" style={styles.navLink}>
+                My Reels
+              </Link>
               <button type="button" style={styles.button} onClick={handleProfile}>
                 Profile
               </button>
@@ -56,12 +59,19 @@ const styles = {
   header: {
     borderBottom: "1px solid #e5e5e5",
     backgroundColor: "#ffffff",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "50px",
+    zIndex: 1000,
   },
   nav: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "12px 24px",
+    padding: "0 24px",
+    height: "100%",
     maxWidth: "1100px",
     margin: "0 auto",
   },
@@ -103,6 +113,15 @@ const styles = {
     fontSize: "0.9rem",
     color: "#6b7280",
     textDecoration: "none",
+  },
+  navLink: {
+    fontSize: "0.9rem",
+    color: "#5843f7",
+    textDecoration: "none",
+    fontWeight: 500,
+    padding: "6px 12px",
+    borderRadius: "6px",
+    backgroundColor: "rgba(88, 67, 247, 0.08)",
   },
   primaryLink: {
     padding: "6px 14px",

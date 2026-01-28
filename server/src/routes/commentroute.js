@@ -1,11 +1,20 @@
-const express=require("express");
+const express = require("express");
 
-const {addComment,getComments}=require("../controllers/commentcontroller");
-const authMiddleware=require("../middlewares/auth");
+const { addComment, getComments, deleteComment, getCommentCount } = require("../controllers/commentcontroller");
+const authMiddleware = require("../middlewares/auth");
 
-const router=express.Router();
+const router = express.Router();
 
-router.post("/addcomment",authMiddleware,addComment);
-router.get("/comments/:reelId",authMiddleware,getComments);
+// Add comment or reply (pass parentCommentId in body for reply)
+router.post("/add", authMiddleware, addComment);
 
-module.exports=router;
+// Get all comments for a reel (with nested replies)
+router.get("/reel/:reelId", authMiddleware, getComments);
+
+// Get comment count for a reel
+router.get("/count/:reelId", authMiddleware, getCommentCount);
+
+// Delete a comment (soft delete)
+router.delete("/:commentId", authMiddleware, deleteComment);
+
+module.exports = router;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
+
 const Groups = () => {
   const [groups, setGroups] = useState([]);
   const [groupName, setGroupName] = useState("");
@@ -82,7 +83,6 @@ const Groups = () => {
     <div style={styles.container}>
       <h2>Your Groups</h2>
 
-      {/* CREATE GROUP */}
       <form onSubmit={handleCreateGroup} style={styles.createBox}>
         <input
           placeholder="New group name"
@@ -94,7 +94,7 @@ const Groups = () => {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* GROUP LIST */}
+      
       {groups.length === 0 && <p>No groups yet</p>}
 
       {groups.map((group) => (
@@ -117,7 +117,7 @@ const Groups = () => {
         </div>
       ))}
 
-      {/* ADD MEMBER */}
+    
       {selectedGroup && (
         <div style={styles.addMemberBox}>
           <h4>Add member to: {selectedGroup.name}</h4>
@@ -135,7 +135,7 @@ const Groups = () => {
         </div>
       )}
 
-      {/* VIEW MEMBERS */}
+      
       {viewMembersGroup && (
         <div style={styles.membersBox}>
           <h4>Members of: {viewMembersGroup.name}</h4>

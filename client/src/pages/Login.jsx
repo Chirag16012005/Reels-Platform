@@ -3,7 +3,7 @@ import { useState } from "react";
 import api from "../api/axios";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authcontext";
-import "./AuthPage.css";
+import "../styles/AuthPage.css";
 
 const Login = () => {
   const [email, setemail] = useState("");

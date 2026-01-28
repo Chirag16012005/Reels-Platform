@@ -1,14 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios";
-import "./UploadReel.css";
+import "../styles/UploadReel.css";
 
 const UploadReel = () => {
   const [searchParams] = useSearchParams();
   const [video, setVideo] = useState(null);
   const [caption, setCaption] = useState("");
   const [groups, setGroups] = useState([]);
-  const [groupId, setGroupId] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -24,10 +24,11 @@ const UploadReel = () => {
       .catch(() => setError("Failed to load groups"));
   }, []);
 
+  // Pre-select group if groupId is in URL
   useEffect(() => {
     const presentGroupId = searchParams.get("groupId");
     if (presentGroupId) {
-      setGroupId(presentGroupId);
+      setSelectedGroups([presentGroupId]);
     }
   }, [searchParams]);
 
@@ -89,11 +90,27 @@ const UploadReel = () => {
     }
   };
 
+  // Handle group selection toggle
+  const handleGroupToggle = (groupId) => {
+    setSelectedGroups(prev => {
+      if (prev.includes(groupId)) {
+        return prev.filter(id => id !== groupId);
+      } else {
+        return [...prev, groupId];
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!video || !groupId) {
-      setError("Video and group are required");
+    if (!video) {
+      setError("Video is required");
+      return;
+    }
+
+    if (selectedGroups.length === 0) {
+      setError("Please select at least one group to share the reel");
       return;
     }
 
@@ -105,9 +122,11 @@ const UploadReel = () => {
       const formData = new FormData();
       formData.append("video", video);
       formData.append("caption", caption);
-      formData.append("groupId", groupId);
       formData.append("title", "group reel");
+      // Send the first group for initial upload
+      formData.append("groupId", selectedGroups[0]);
 
+      // Upload the reel
       const response = await api.post("/reels/upload", formData, {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round(
@@ -118,7 +137,25 @@ const UploadReel = () => {
       });
 
       console.log("Upload successful:", response.data);
-      navigate(`/group/${groupId}`);
+      const uploadedReel = response.data.reel;
+
+      // Share to additional groups if more than one selected
+      if (selectedGroups.length > 1) {
+        for (let i = 1; i < selectedGroups.length; i++) {
+          try {
+            await api.post("/reels/share", {
+              reelId: uploadedReel._id,
+              groupId: selectedGroups[i]
+            });
+            console.log(`Shared to group ${selectedGroups[i]}`);
+          } catch (shareErr) {
+            console.error(`Failed to share to group ${selectedGroups[i]}:`, shareErr);
+          }
+        }
+      }
+
+      // Navigate to the first selected group
+      navigate(`/group/${selectedGroups[0]}`);
     } catch (err) {
       console.error("Upload error:", err);
       if (err.code === "ECONNABORTED") {
@@ -138,6 +175,9 @@ const UploadReel = () => {
   return (
     <div className="upload-container">
       <h2 className="upload-title">Upload Reel</h2>
+      <p className="upload-subtitle">
+        Upload once, share to multiple groups!
+      </p>
 
       {error && <p className="upload-error">{error}</p>}
 
@@ -214,21 +254,38 @@ const UploadReel = () => {
           onChange={(e) => setCaption(e.target.value)}
         />
 
-        <select
-          className="upload-select"
-          value={groupId}
-          onChange={(e) => setGroupId(e.target.value)}
-        >
-          <option value="">Select Group</option>
-          {groups.map(group => (
-            <option key={group._id} value={group._id}>
-              {group.name}
-            </option>
-          ))}
-        </select>
+        {/* Multi-select Groups */}
+        <div className="group-selection">
+          <label className="group-selection-label">
+            Share to Groups ({selectedGroups.length} selected)
+          </label>
+          <div className="group-checkboxes">
+            {groups.map(group => (
+              <label
+                key={group._id}
+                className={`group-checkbox-item ${selectedGroups.includes(group._id) ? 'selected' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedGroups.includes(group._id)}
+                  onChange={() => handleGroupToggle(group._id)}
+                />
+                <span className="group-name">{group.name}</span>
+                {selectedGroups.includes(group._id) && (
+                  <span className="check-icon">✓</span>
+                )}
+              </label>
+            ))}
+          </div>
+          {groups.length === 0 && (
+            <p className="no-groups-message">
+              You're not a member of any groups yet. Join a group first!
+            </p>
+          )}
+        </div>
 
         <button type="submit" className="upload-button" disabled={loading}>
-          {loading ? "Uploading..." : "Upload"}
+          {loading ? "Uploading..." : `Upload & Share to ${selectedGroups.length} Group${selectedGroups.length !== 1 ? 's' : ''}`}
         </button>
       </form>
     </div>
