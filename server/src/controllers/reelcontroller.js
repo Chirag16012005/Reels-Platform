@@ -8,7 +8,7 @@ const uploadReel = async (req, res) => {
     try {
         console.log("Request Body:", req.body);
         console.log("Request File:", req.file ? "File received" : "No file");
-        const { title, caption, groupId } = req.body;
+        const { title, caption, groupId, visibility } = req.body;
         const userId = req.user._id;
 
         if (!req.file) {
@@ -27,6 +27,7 @@ const uploadReel = async (req, res) => {
             uploadedBy: userId,
             // groupId is optional now - only set if provided for backward compatibility
             groupId: groupId || null,
+            visibility: visibility || "public",
         });
         await reel.save();
         console.log("After cloudinary, Reel created:", reel._id);
@@ -88,9 +89,14 @@ const getreel = async (req, res) => {
 
         const reelIds = groupReels.map(gr => gr.reelId);
 
-        // Fetch the actual reels
-        const reels = await Reel.find({ _id: { $in: reelIds } })
-            .populate("uploadedBy", "username email");
+        // Fetch the actual reels — exclude private reels (unless the viewer is the uploader)
+        const reels = await Reel.find({
+            _id: { $in: reelIds },
+            $or: [
+                { visibility: { $ne: "private" } },
+                { uploadedBy: userId }
+            ]
+        }).populate("uploadedBy", "username email");
 
         // Sort reels based on the order they were shared
         const reelMap = new Map(reels.map(r => [r._id.toString(), r]));
@@ -263,6 +269,115 @@ const getReelGroups = async (req, res) => {
     }
 }
 
+// Update visibility of a reel (only owner can update)
+const updateVisibility = async (req, res) => {
+    try {
+        const { reelId } = req.params;
+        const { visibility } = req.body;
+        const userId = req.user._id;
+
+        // Validate visibility value
+        if (!['public', 'private'].includes(visibility)) {
+            return res.status(400).json({ message: "Visibility must be 'public' or 'private'" });
+        }
+
+        // Find the reel
+        const reel = await Reel.findById(reelId);
+        if (!reel) {
+            return res.status(404).json({ message: "Reel not found" });
+        }
+
+        // Only the owner can change visibility
+        if (reel.uploadedBy.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "You can only update visibility of your own reels" });
+        }
+
+        reel.visibility = visibility;
+        await reel.save();
+
+        const updatedReel = await Reel.findById(reelId)
+            .populate("uploadedBy", "username email");
+
+        res.status(200).json({
+            message: `Reel visibility updated to '${visibility}'`,
+            reel: updatedReel
+        });
+    } catch (error) {
+        console.error("Error updating visibility:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+const getPublicReels = async (req, res) => {
+    try {
+        const reels = await Reel.find({ visibility: "public" })
+            .populate("uploadedBy", "username email")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(reels);
+    } catch (error) {
+        console.error("Error getting public reels:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+// Get feed reels - random reels from all groups the user is a member of
+const getFeedReels = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Find all groups the user is a member of
+        const userGroups = await Group.find({ members: userId });
+        const groupIds = userGroups.map(g => g._id);
+
+        // Get all reel IDs shared to these groups
+        const groupReels = await GroupReel.find({ groupId: { $in: groupIds } })
+            .populate("groupId", "name");
+
+        // Build reel-to-group mapping (a reel may be in multiple groups, pick one for display)
+        const reelGroupMap = {};
+        groupReels.forEach(gr => {
+            if (!reelGroupMap[gr.reelId.toString()]) {
+                reelGroupMap[gr.reelId.toString()] = {
+                    groupName: gr.groupId?.name || "Unknown",
+                    groupId: gr.groupId?._id
+                };
+            }
+        });
+
+        const reelIds = Object.keys(reelGroupMap);
+
+        // Fetch actual reels — exclude private ones (unless user is the uploader)
+        const reels = await Reel.find({
+            _id: { $in: reelIds },
+            $or: [
+                { visibility: { $ne: "private" } },
+                { uploadedBy: userId }
+            ]
+        }).populate("uploadedBy", "username email");
+
+        // Attach group info and shuffle
+        const reelsWithGroups = reels.map(reel => ({
+            ...reel.toObject(),
+            groupName: reelGroupMap[reel._id.toString()]?.groupName,
+            groupId: reelGroupMap[reel._id.toString()]?.groupId
+        }));
+
+        // Shuffle randomly (Fisher-Yates)
+        for (let i = reelsWithGroups.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [reelsWithGroups[i], reelsWithGroups[j]] = [reelsWithGroups[j], reelsWithGroups[i]];
+        }
+
+        res.status(200).json(reelsWithGroups.slice(0, 20));
+    } 
+    catch (error) 
+    {
+        console.error("Error getting feed reels:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
 module.exports = {
     uploadReel,
     getreel,
@@ -270,5 +385,8 @@ module.exports = {
     shareReelToGroup,
     unshareReelFromGroup,
     getMyReels,
-    getReelGroups
+    getReelGroups,
+    getPublicReels,
+    updateVisibility,
+    getFeedReels
 };

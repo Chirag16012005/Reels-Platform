@@ -11,7 +11,7 @@ const sendMail = async (to, subject, text, html = null) => {
         });
 
         const mailOptions = {
-            from: `"Reels Platform" <${process.env.EMAIL_USER}>`,
+            from: `"ReelVault" <${process.env.EMAIL_USER}>`,
             to: to,
             subject: subject,
             text: text,
@@ -40,11 +40,11 @@ const sendMail = async (to, subject, text, html = null) => {
 };
 
 const sendOTPEmail= async (to, otp,name) => {
-    const subject = "Your OTP for REELS PLATFORM";
-    const text = `Your OTP for REELS PLATFORM is: ${otp}. It is valid for 10 minutes.`;
+    const subject = "Your OTP for REELVAULT";
+    const text = `Your OTP for REELVAULT is: ${otp}. It is valid for 10 minutes.`;
     const html = `
     <h1>Hello ${name},</h1>
-      <h2>Your OTP for REELS PLATFORM</h2>
+      <h2>Your OTP for REELVAULT</h2>
       <p>Your OTP is: <strong>${otp}</strong></p>
       <p>This OTP is valid for 10 minutes.</p>
     `;

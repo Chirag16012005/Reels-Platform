@@ -12,6 +12,7 @@ const MyReels = () => {
     const [selectedReel, setSelectedReel] = useState(null);
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [sharing, setSharing] = useState(false);
+    const [togglingVisibility, setTogglingVisibility] = useState(null); // reelId being toggled
 
     // Fetch user's reels
     useEffect(() => {
@@ -110,6 +111,29 @@ const MyReels = () => {
         });
     };
 
+    // Toggle visibility of a reel
+    const handleToggleVisibility = async (reel) => {
+        if (togglingVisibility) return;
+
+        const newVisibility = reel.visibility === 'public' ? 'private' : 'public';
+
+        try {
+            setTogglingVisibility(reel._id);
+            await api.patch(`/reels/${reel._id}/visibility`, {
+                visibility: newVisibility
+            });
+
+            // Refresh reels
+            const res = await api.get("/reels/my-reels");
+            setReels(res.data);
+        } catch (err) {
+            console.error("Failed to update visibility:", err);
+            alert(err.response?.data?.message || "Failed to update visibility");
+        } finally {
+            setTogglingVisibility(null);
+        }
+    };
+
     if (loading) {
         return (
             <div className="my-reels-container">
@@ -164,9 +188,14 @@ const MyReels = () => {
                             </div>
 
                             <div className="reel-details">
-                                <p className="reel-caption">
-                                    {reel.caption || "No caption"}
-                                </p>
+                                <div className="reel-meta-row">
+                                    <p className="reel-caption">
+                                        {reel.caption || "No caption"}
+                                    </p>
+                                    <span className={`visibility-badge ${reel.visibility || 'public'}`}>
+                                        {reel.visibility === 'private' ? '🔒 Private' : '🌐 Public'}
+                                    </span>
+                                </div>
                                 <span className="reel-date">{formatDate(reel.createdAt)}</span>
 
                                 <div className="shared-groups">
@@ -189,6 +218,18 @@ const MyReels = () => {
                                 </div>
 
                                 <div className="reel-actions">
+                                    <button
+                                        className={`visibility-toggle-btn ${reel.visibility === 'private' ? 'is-private' : 'is-public'}`}
+                                        onClick={() => handleToggleVisibility(reel)}
+                                        disabled={togglingVisibility === reel._id}
+                                    >
+                                        {togglingVisibility === reel._id
+                                            ? '⏳ Updating...'
+                                            : reel.visibility === 'private'
+                                                ? '🌐 Make Public'
+                                                : '🔒 Make Private'
+                                        }
+                                    </button>
                                     <button
                                         className="share-btn"
                                         onClick={() => handleOpenShareModal(reel)}

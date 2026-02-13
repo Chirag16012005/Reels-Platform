@@ -156,6 +156,9 @@ const GroupFeed = () => {
       console.error("Failed to delete comment:", err);
     }
   };
+  const handleViewProfile = (userId) => {
+    navigate(`/users/${userId}`);
+  };
 
   // Format time
   const formatTime = (dateString) => {
@@ -257,7 +260,7 @@ const GroupFeed = () => {
               const likeCount = reel.likes?.length || 0;
 
               return (
-                <div key={reel._id} className="reel-card">
+                <div key={reel._id} className="feed-reel-card">
                   <video
                     src={reel.videoUrl}
                     controls
@@ -308,7 +311,7 @@ const GroupFeed = () => {
                   ←
                 </button>
                 <div>
-                  <h3>💬 Comments</h3>
+                  <h3>Comments</h3>
                   <p>{comments.length} comment{comments.length !== 1 ? "s" : ""}</p>
                 </div>
               </div>
@@ -358,18 +361,22 @@ const GroupFeed = () => {
         ) : (
           <>
             <div className="chat-panel-header">
-              <h3>👥 {groupInfo?.name || "Group"}</h3>
+              <h3> {groupInfo?.name || "Group"}</h3>
               <p>{groupInfo?.members?.length || 0} members</p>
             </div>
 
             {/* Members List */}
             <div className="chat-messages-container">
               <div className="members-section">
-                <h4 className="members-title">Group Members</h4>
+                <h4 className="members-title">Members</h4>
                 {groupInfo?.members?.length > 0 ? (
                   <div className="members-list">
                     {groupInfo.members.map((member) => (
-                      <div key={member._id} className="member-item">
+                      <div 
+                        key={member._id} 
+                        className="member-item clickable"
+                        onClick={() => handleViewProfile(member._id)}
+                      >
                         <div className="member-avatar">
                           {member.username?.charAt(0).toUpperCase() || "?"}
                         </div>

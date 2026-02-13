@@ -28,15 +28,15 @@ exports.register = async (req, res) => {
         password:hashedpassword,
     });
     await newUser.save();
-     const emailSubject = "Welcome to Reels Platform!";
-    const emailText = `Hi ${username},\n\nThank you for signing up for Reels Platform! We're excited to have you on board.\n\nYou can now start creating and managing your notes.\n\nBest regards,\nReels Platform Team`;
+     const emailSubject = "Welcome to ReelVault!";
+    const emailText = `Hi ${username},\n\nThank you for signing up for ReelVault! We're excited to have you on board.\n\nYou can now start creating and managing your notes.\n\nBest regards,\nReelVault Team`;
     const emailHtml = `
-      <h2>Welcome to Reels Platform!</h2>
+      <h2>Welcome to ReelVault!</h2>
       <p>Hi <strong>${username}</strong>,</p>
-      <p>Thank you for signing up for Reels Platform! We're excited to have you on board.</p>
+      <p>Thank you for signing up for ReelVault! We're excited to have you on board.</p>
       <p>You can now start posting reels.</p>
       <br>
-      <p>Best regards,<br>Reels Platform Team: Chirag Katkoriya</p>
+      <p>Best regards,<br>ReelVault Team: Chirag Katkoriya</p>
     `;
     sendMail(email, emailSubject, emailText, emailHtml)
       .then(result => {

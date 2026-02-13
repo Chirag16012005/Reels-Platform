@@ -103,7 +103,7 @@
 }
 
 .reel-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(135, 206, 250, 0.95);
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid rgba(100, 100, 140, 0.12);
@@ -225,9 +225,82 @@
     font-style: italic;
 }
 
+/* Reel Meta Row */
+.reel-meta-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* Visibility Badge */
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.visibility-badge.public {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.visibility-badge.private {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
 /* Reel Actions */
 .reel-actions {
     margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.visibility-toggle-btn {
+    width: 100%;
+    padding: 0.7rem;
+    border: 2px solid;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.visibility-toggle-btn.is-public {
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.visibility-toggle-btn.is-public:hover {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: #d97706;
+}
+
+.visibility-toggle-btn.is-private {
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+.visibility-toggle-btn.is-private:hover {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: #16a34a;
+}
+
+.visibility-toggle-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .share-btn {

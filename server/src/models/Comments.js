@@ -34,11 +34,11 @@ const CommentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Comment"
     }],
-    // Track nesting depth (0 = top-level, 1 = reply, 2 = reply to reply, etc.)
+    
     depth: {
         type: Number,
         default: 0,
-        max: 3  // Limit nesting to prevent too deep threads
+        max: 3  
     },
     // Soft delete flag
     isDeleted: {
@@ -47,7 +47,7 @@ const CommentSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Index for faster queries - now includes group
+
 CommentSchema.index({ reel: 1, group: 1, parentComment: 1 });
 CommentSchema.index({ reel: 1, group: 1, createdAt: -1 });
 

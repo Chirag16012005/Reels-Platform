@@ -6,7 +6,10 @@ const {
   shareReelToGroup,
   unshareReelFromGroup,
   getMyReels,
-  getReelGroups
+  getReelGroups,
+  getPublicReels,
+  updateVisibility,
+  getFeedReels
 } = require("../controllers/reelcontroller");
 
 const authmiddleware = require("../middlewares/auth");
@@ -59,8 +62,17 @@ router.get("/group/:groupId", authmiddleware, getreel);
 // Get all reels uploaded by current user
 router.get("/my-reels", authmiddleware, getMyReels);
 
+// Get all public reels
+router.get("/public", authmiddleware, getPublicReels);
+
+// Get random feed reels from user's groups
+router.get("/feed", authmiddleware, getFeedReels);
+
 // Get groups where a reel is shared
 router.get("/:reelId/groups", authmiddleware, getReelGroups);
+
+// Update visibility of a reel
+router.patch("/:reelId/visibility", authmiddleware, updateVisibility);
 
 // Like / Unlike a reel
 router.post("/like", authmiddleware, togglelike);

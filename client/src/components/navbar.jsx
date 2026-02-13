@@ -15,14 +15,14 @@ const Navbar = () => {
   };
 
   const handleProfile = () => {
-    navigate("/profile");
+    navigate(`/users/${user._id}`);
   };
 
   return (
     <header style={styles.header}>
       <nav style={styles.nav}>
         <Link to={user ? "/groups" : "/login"} style={styles.brand}>
-          Reels
+          ReelVault
         </Link>
 
         <div style={styles.actions}>

@@ -153,7 +153,7 @@ const LandingPage = () => {
             <footer className="landing-footer">
                 <div className="footer-content">
                     <div className="footer-brand">
-                        <span className="footer-logo">📹 Reels Platform</span>
+                        <span className="footer-logo">📹 ReelVault</span>
                         <p>Built for real connections.</p>
                     </div>
                     <div className="footer-links">

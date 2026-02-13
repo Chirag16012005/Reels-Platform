@@ -1,18 +1,54 @@
 import { useAuth } from "../context/authcontext";
+import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import api from "../api/axios";
 
 const Profile = () => {
   const { user } = useAuth();
+  const {userId} = useParams();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!user) {
-    return null;
+  const isOwn=!user || userId===user?.id;
+
+  // if (!user) {
+  //   return null;
+  // }
+  useEffect(()=>{
+    const fetchProfile=async()=>{
+      try{
+        if(isOwn)
+        {
+          setProfile(user);
+        }
+        else{
+          const res=await api.get(`/users/${userId}`);
+          setProfile(res.data);
+        }
+      }
+      catch(err){
+        setError(err.message);
+      }
+      finally{
+        setLoading(false);
+      }
+
+    }
+    fetchProfile();
+  },[userId,user,isOwn])
+
+    if (loading || !profile) {
+      console.log("loading"); 
+    return <div style={styles.container}>Loading...</div>;
   }
 
   return (
     <main style={styles.container}>
       <section style={styles.card}>
         <h1 style={styles.heading}>Profile</h1>
-        <p style={styles.detail}>Username: <strong>{user.username}</strong></p>
-        <p style={styles.detail}>Email: <strong>{user.email}</strong></p>
+        <p style={styles.detail}>Username: <strong>{profile.username}</strong></p>
+        <p style={styles.detail}>Email: <strong>{profile.email}</strong></p>
       </section>
     </main>
   );
